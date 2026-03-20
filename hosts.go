@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020-2022, IrineSistiana
- *
+ * 编译命令： go build -ldflags="-s -w" -o mosdns ./main.go
  * This file is part of mosdns.
  *
  * mosdns is free software: you can redistribute it and/or modify
