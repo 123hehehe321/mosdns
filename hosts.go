@@ -20,11 +20,13 @@
 package hosts
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -56,6 +58,7 @@ type Args struct {
 	Files       []string `yaml:"files"`
 	UpdateHours int      `yaml:"update_hours"` // 远程更新间隔（小时），0=不自动更新
 	CacheDir    string   `yaml:"cache_dir"`    // 远程文件本地缓存目录
+	OverrideIP  string   `yaml:"override_ip"`  // 新增：覆盖所有规则的目标IP，留空则使用文件原始IP
 }
 
 // remoteEntry 单个远程规则文件
@@ -73,6 +76,7 @@ type Hosts struct {
 	localFiles  []string
 	remoteFiles []*remoteEntry
 	updateHours int
+	overrideIP  net.IP // 解析后的覆盖IP，nil表示不覆盖
 	stopCh      chan struct{}
 }
 
@@ -95,6 +99,16 @@ func NewHosts(args *Args) (*Hosts, error) {
 		remoteFiles: []*remoteEntry{},
 		updateHours: args.UpdateHours,
 		stopCh:      make(chan struct{}),
+	}
+
+	// 解析 override_ip
+	if args.OverrideIP != "" {
+		ip := net.ParseIP(args.OverrideIP)
+		if ip == nil {
+			return nil, fmt.Errorf("invalid override_ip: %s", args.OverrideIP)
+		}
+		plugin.overrideIP = ip
+		mlog.S().Infof("[hosts] override_ip enabled: all rules will resolve to %s", args.OverrideIP)
 	}
 
 	// 分类本地文件和远程 URL
@@ -200,15 +214,14 @@ func (h *Hosts) reload() error {
 
 	// 2. 加载本地规则文件
 	for _, file := range h.localFiles {
-		if err := loadFile(m, file); err != nil {
+		if err := h.loadFile(m, file); err != nil {
 			return fmt.Errorf("failed to load local file %s: %w", file, err)
 		}
 	}
 
 	// 3. 加载远程规则的本地缓存
 	for _, rf := range h.remoteFiles {
-		if err := loadFile(m, rf.localPath); err != nil {
-			// 缓存文件不存在（首次运行还没下载），降级跳过
+		if err := h.loadFile(m, rf.localPath); err != nil {
 			mlog.S().Infof("[hosts] remote cache not ready %s, skipping", rf.url)
 			continue
 		}
@@ -220,12 +233,63 @@ func (h *Hosts) reload() error {
 }
 
 // loadFile 从文件加载规则到 MixMatcher
-func loadFile(m *domain.MixMatcher[*hosts.IPs], path string) error {
+// 如果配置了 override_ip，则对每一行替换其 IP 部分
+func (h *Hosts) loadFile(m *domain.MixMatcher[*hosts.IPs], path string) error {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	return domain.LoadFromTextReader[*hosts.IPs](m, bytes.NewReader(b), hosts.ParseIPs)
+
+	// 没有配置 override_ip，直接用原始文件内容
+	if h.overrideIP == nil {
+		return domain.LoadFromTextReader[*hosts.IPs](m, bytes.NewReader(b), hosts.ParseIPs)
+	}
+
+	// 有 override_ip，逐行处理替换IP后再加载
+	processed := h.processWithOverrideIP(b)
+	return domain.LoadFromTextReader[*hosts.IPs](m, bytes.NewReader(processed), hosts.ParseIPs)
+}
+
+// processWithOverrideIP 把规则文件中每行的 IP 部分替换为 override_ip
+// 支持以下格式：
+//   domain:example.com 1.2.3.4
+//   domain:example.com          （无IP，直接追加）
+//   regexp:^xxx\.com$ 1.2.3.4
+//   # 注释行（原样保留）
+//   空行（原样保留）
+func (h *Hosts) processWithOverrideIP(data []byte) []byte {
+	ipStr := h.overrideIP.String()
+	var buf bytes.Buffer
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+
+		// 空行或注释行原样保留
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			buf.WriteString(line)
+			buf.WriteByte('\n')
+			continue
+		}
+
+		// 分割行内容
+		fields := strings.Fields(trimmed)
+		if len(fields) == 0 {
+			buf.WriteString(line)
+			buf.WriteByte('\n')
+			continue
+		}
+
+		// 取规则部分（第一个字段），替换或追加 IP
+		// 输出格式：规则 IP
+		buf.WriteString(fields[0])
+		buf.WriteByte(' ')
+		buf.WriteString(ipStr)
+		buf.WriteByte('\n')
+	}
+
+	return buf.Bytes()
 }
 
 // autoUpdate 定时更新协程
