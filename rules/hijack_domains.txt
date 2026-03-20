@@ -1,0 +1,114 @@
+# ========================
+# Google 全家桶
+# ========================
+domain:www.google.com
+domain:www.google.co.jp
+domain:www.google.com.hk
+domain:www.google.com.sg
+domain:www.google.com.tw
+
+# ========================
+# Netflix
+# ========================
+domain:netflix.com
+domain:netflix.net
+domain:nflxvideo.net
+domain:nflxext.com
+domain:nflximg.com
+domain:nflximg.net
+domain:nflxso.net
+domain:nflxsearch.net
+domain:netflix.ca
+domain:netflixinvestor.com
+domain:netflixtechblog.com
+domain:netflix.com.edgesuite.net
+domain:netflixdnstest1.com
+domain:netflixdnstest2.com
+domain:netflixdnstest3.com
+domain:netflixdnstest4.com
+domain:netflixdnstest5.com
+domain:netflixdnstest6.com
+domain:netflixdnstest7.com
+domain:netflixdnstest8.com
+domain:netflixdnstest9.com
+domain:netflixdnstest10.com
+
+# ========================
+# Disney 迪士尼
+# ========================
+domain:bamgrid.com
+domain:disneyplus.com
+domain:disney-plus.net
+domain:disneystreaming.com
+domain:dssott.com
+domain:cdn.registerdisney.go.com
+domain:disneynow.com
+domain:disneyjunior.com
+
+# ========================
+# OpenAI / ChatGPT
+# ========================
+domain:ai.com
+domain:chat.com
+domain:sora.com
+domain:openai.com
+domain:chatgpt.com
+domain:oaistatic.com
+domain:oaiusercontent.com
+domain:openaicom.imgix.net
+domain:o33249.ingest.sentry.io
+domain:openai.com.cdn.cloudflare.net
+domain:openaiapi-site.azureedge.net
+domain:production-openaicom-storage.azureedge.net
+domain:openaicomproductionae4b.blob.core.windows.net
+domain:openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
+domain:api.statsig.com
+domain:turn.livekit.cloud
+domain:chatgpt.livekit.cloud
+domain:browser-intake-datadoghq.com
+domain:host.livekit.cloud
+
+# ========================
+# Gemini / Google AI
+# ========================
+domain:deepmind.com
+domain:deepmind.google
+domain:geller-pa.googleapis.com
+domain:generativelanguage.googleapis.com
+domain:proactivebackend-pa.googleapis.com
+domain:robinfrontend-pa.googleapis.com
+domain:ai.google.dev
+domain:alkalicore-pa.clients6.google.com
+domain:alkalimakersuite-pa.clients6.google.com
+domain:webchannel-alkalimakersuite-pa.clients6.google.com
+domain:generativeai.google
+domain:makersuite.google.com
+domain:ai.studio
+domain:aistudio.google.com
+domain:bard.google.com
+domain:gemini.google
+domain:gemini.google.com
+domain:cloudaicompanion.googleapis.com
+domain:cloudcode-pa.googleapis.com
+domain:daily-cloudcode-pa.googleapis.com
+domain:notebooklm-pa.googleapis.com
+domain:notebooklm.googleapis.com
+domain:notebooklm.google
+domain:notebooklm.google.com
+domain:jules.google
+domain:jules.google.com
+domain:labs.google
+domain:labs.google.com
+domain:aisandbox-pa.googleapis.com
+domain:aida.googleapis.com
+domain:opal.google
+domain:opal.google.com
+domain:antigravity-pa.googleapis.com
+domain:antigravity.googleapis.com
+domain:antigravity.google
+domain:antigravity-unleash.goog
+
+# ========================
+# 正则匹配规则
+# ========================
+regexp:^chatgpt-async-webps-prod-\S+-\d+\.webpubsub\.azure\.com$
