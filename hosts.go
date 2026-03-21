@@ -46,6 +46,10 @@ import (
 
 const PluginType = "hosts"
 
+// minValidRules 下载文件有效规则最低阈值
+// 低于此值视为截断或损坏，拒绝替换本地缓存
+const minValidRules = 10
+
 func init() {
 	coremain.RegNewPluginFunc(PluginType, Init, func() any { return new(Args) })
 }
@@ -58,7 +62,7 @@ type Args struct {
 	Files       []string `yaml:"files"`
 	UpdateHours int      `yaml:"update_hours"` // 远程更新间隔（小时），0=不自动更新
 	CacheDir    string   `yaml:"cache_dir"`    // 远程文件本地缓存目录
-	OverrideIP  string   `yaml:"override_ip"`  // 新增：覆盖所有规则的目标IP，留空则使用文件原始IP
+	OverrideIP  string   `yaml:"override_ip"`  // 覆盖所有规则的目标IP，留空则使用文件原始IP
 }
 
 // remoteEntry 单个远程规则文件
@@ -155,6 +159,18 @@ func (h *Hosts) initFromLocal() {
 	}
 }
 
+// countValidRules 统计数据中有效规则条数
+func countValidRules(data []byte) int {
+	count := 0
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "domain:") || strings.HasPrefix(line, "regexp:") {
+			count++
+		}
+	}
+	return count
+}
+
 // fetchAndReload 拉取所有远程文件，有变化则重载
 func (h *Hosts) fetchAndReload() {
 	changed := false
@@ -163,6 +179,14 @@ func (h *Hosts) fetchAndReload() {
 		data, err := fetchURL(rf.url)
 		if err != nil {
 			mlog.S().Warnf("[hosts] fetch failed %s: %v, using local cache", rf.url, err)
+			continue
+		}
+
+		// 验证下载内容有效性，防止截断或空文件覆盖完整缓存
+		validCount := countValidRules(data)
+		if validCount < minValidRules {
+			mlog.S().Warnf("[hosts] downloaded file has only %d valid rules (min: %d), skipping %s",
+				validCount, minValidRules, rf.url)
 			continue
 		}
 
@@ -185,7 +209,7 @@ func (h *Hosts) fetchAndReload() {
 
 		rf.lastHash = newHash
 		changed = true
-		mlog.S().Infof("[hosts] remote rule updated: %s", rf.url)
+		mlog.S().Infof("[hosts] remote rule updated: %s (%d rules)", rf.url, validCount)
 	}
 
 	if changed {
@@ -252,11 +276,12 @@ func (h *Hosts) loadFile(m *domain.MixMatcher[*hosts.IPs], path string) error {
 
 // processWithOverrideIP 把规则文件中每行的 IP 部分替换为 override_ip
 // 支持以下格式：
-//   domain:example.com 1.2.3.4
-//   domain:example.com          （无IP，直接追加）
-//   regexp:^xxx\.com$ 1.2.3.4
-//   # 注释行（原样保留）
-//   空行（原样保留）
+//
+//	domain:example.com 1.2.3.4
+//	domain:example.com          （无IP，直接追加）
+//	regexp:^xxx\.com$ 1.2.3.4
+//	# 注释行（原样保留）
+//	空行（原样保留）
 func (h *Hosts) processWithOverrideIP(data []byte) []byte {
 	ipStr := h.overrideIP.String()
 	var buf bytes.Buffer
@@ -282,7 +307,6 @@ func (h *Hosts) processWithOverrideIP(data []byte) []byte {
 		}
 
 		// 取规则部分（第一个字段），替换或追加 IP
-		// 输出格式：规则 IP
 		buf.WriteString(fields[0])
 		buf.WriteByte(' ')
 		buf.WriteString(ipStr)
