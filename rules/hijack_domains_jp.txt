@@ -8,20 +8,20 @@ domain:www.google.com.sg
 domain:www.google.com.tw
 
 # ========================
-# Netflix 奈飞
+# Netflix
 # ========================
-domain:netflix.ca
-domain:netflixinvestor.com
-domain:netflixtechblog.com
-domain:netflix.com.edgesuite.net
 domain:netflix.com
 domain:netflix.net
+domain:nflxvideo.net
 domain:nflxext.com
 domain:nflximg.com
 domain:nflximg.net
 domain:nflxso.net
-domain:nflxvideo.net
 domain:nflxsearch.net
+domain:netflix.ca
+domain:netflixinvestor.com
+domain:netflixtechblog.com
+domain:netflix.com.edgesuite.net
 
 # Netflix 测速与 DNS 测试
 domain:fast.com
