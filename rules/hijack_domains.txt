@@ -67,6 +67,8 @@ domain:production-openaicom-storage.azureedge.net
 domain:openaicomproductionae4b.blob.core.windows.net
 domain:openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 domain:api.statsig.com
+domain:oaistatsig.com
+regexp:^cdn\.openaimerge\.com$
 domain:turn.livekit.cloud
 domain:chatgpt.livekit.cloud
 domain:browser-intake-datadoghq.com
@@ -137,6 +139,7 @@ domain:opal.google.com
 domain:antigravity-pa.googleapis.com
 domain:antigravity.googleapis.com
 domain:antigravity.google
+domain:antigravity.google.com
 domain:antigravity-unleash.goog
 
 # ========================
